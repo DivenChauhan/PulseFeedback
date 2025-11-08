@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Message, Reply, ProductCategory } from '@/lib/supabase';
+import { Message, Reply, ProductCategory, CreatorFeedbackCategory } from '@/lib/supabase';
 import { Button, Input, Typography } from '@whop/frosted-ui';
 import { 
   Copy, 
@@ -14,6 +14,7 @@ import {
   Trash2,
   CheckCircle,
   XCircle,
+  X,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -47,7 +48,25 @@ export default function DashboardContent({ creatorId, creatorSlug }: DashboardCo
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [supportCategory, setSupportCategory] = useState<CreatorFeedbackCategory>('bug');
+  const [supportSubject, setSupportSubject] = useState('');
+  const [supportMessage, setSupportMessage] = useState('');
+  const [supportSubmitting, setSupportSubmitting] = useState(false);
+  const [supportSuccess, setSupportSuccess] = useState<string | null>(null);
+  const [supportError, setSupportError] = useState<string | null>(null);
   const MESSAGES_PER_PAGE = 10;
+
+  const supportCategories: Array<{
+    value: CreatorFeedbackCategory;
+    label: string;
+    helper: string;
+  }> = [
+    { value: 'bug', label: '🐛 Bug or Issue', helper: 'Something is broken or not working as expected' },
+    { value: 'feedback', label: '💡 Feedback', helper: 'Share thoughts on the experience or workflow' },
+    { value: 'idea', label: '🚀 Idea', helper: 'Suggest improvements or features for Pulse' },
+    { value: 'other', label: '📝 Other', helper: 'Anything else you want to pass along' },
+  ];
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -110,6 +129,60 @@ export default function DashboardContent({ creatorId, creatorSlug }: DashboardCo
   useEffect(() => {
     fetchMessages();
   }, [fetchMessages]);
+
+  const resetSupportForm = () => {
+    setSupportCategory('bug');
+    setSupportSubject('');
+    setSupportMessage('');
+    setSupportSuccess(null);
+    setSupportError(null);
+  };
+
+  const handleOpenSupportModal = () => {
+    resetSupportForm();
+    setIsSupportModalOpen(true);
+  };
+
+  const handleCloseSupportModal = () => {
+    setIsSupportModalOpen(false);
+  };
+
+  const handleSubmitSupportFeedback = async () => {
+    if (!supportMessage.trim()) {
+      setSupportError('Please add some details so we can help effectively.');
+      return;
+    }
+
+    setSupportSubmitting(true);
+    setSupportError(null);
+
+    try {
+      const response = await fetch('/api/creator-feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: supportCategory,
+          subject: supportSubject.trim() || undefined,
+          message: supportMessage.trim(),
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Failed to submit feedback');
+      }
+
+      setSupportSuccess('Thanks! Your note is on its way to the Pulse team.');
+      setSupportSubject('');
+      setSupportMessage('');
+    } catch (error: any) {
+      console.error('Error submitting creator feedback:', error);
+      setSupportError(error?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setSupportSubmitting(false);
+    }
+  };
 
   const handleMarkReviewed = async (id: string, reviewed: boolean) => {
     try {
@@ -851,6 +924,141 @@ export default function DashboardContent({ creatorId, creatorSlug }: DashboardCo
           )}
         </div>
       </div>
+
+      {/* Creator Support CTA */}
+      <div className="mt-12">
+        <div className="bg-gradient-to-r from-white/[0.05] to-blue-500/10 border border-white/[0.08] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+          <div>
+            <Typography as="h2" variant="title-sm" className="text-white font-semibold mb-2">
+              Need a hand or found something off?
+            </Typography>
+            <Typography as="p" variant="body-sm" className="text-white/80 text-sm max-w-2xl">
+              Send a quick note straight to the Pulse team. Whether it&apos;s a bug, an idea, or feedback, we&apos;ll take a look and get back to you.
+            </Typography>
+          </div>
+          <div className="md:ml-auto">
+            <Button
+              onClick={handleOpenSupportModal}
+              size="md"
+              variant="primary"
+              className="!text-white px-5"
+            >
+              Report an Issue or Share Feedback
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Support Modal */}
+      {isSupportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0A0A0A] border border-white/[0.08] rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="flex items-center justify-between p-6 border-b border-white/[0.08] sticky top-0 bg-[#0A0A0A]">
+              <Typography as="h3" variant="title" className="text-white font-bold">
+                Send Feedback to the Pulse Team
+              </Typography>
+              <button
+                onClick={handleCloseSupportModal}
+                className="p-2 rounded-lg text-white hover:bg-white/[0.08] transition-colors"
+                aria-label="Close support form"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div className="space-y-3">
+                <Typography as="p" variant="body-sm" className="text-white text-sm font-medium">
+                  What kind of note is this?
+                </Typography>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {supportCategories.map((option) => {
+                    const isActive = supportCategory === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        onClick={() => setSupportCategory(option.value)}
+                        className={`text-left p-4 rounded-xl border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] ${
+                          isActive
+                            ? 'border-blue-500 bg-blue-500/10 text-white'
+                            : 'border-white/[0.08] text-white hover:border-white/[0.15]'
+                        }`}
+                      >
+                        <Typography as="p" variant="body-sm" className="text-white font-semibold text-sm">
+                          {option.label}
+                        </Typography>
+                        <Typography as="p" variant="body-sm" className="text-white/60 text-xs mt-1">
+                          {option.helper}
+                        </Typography>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Typography as="label" variant="body-sm" className="text-white text-sm font-medium">
+                  Subject <span className="text-white/40 text-xs font-normal">(optional)</span>
+                </Typography>
+                <Input
+                  value={supportSubject}
+                  onChange={(event) => setSupportSubject(event.target.value)}
+                  placeholder="Quick summary"
+                  className="bg-white/[0.05] border-white/[0.1] text-white placeholder:text-white/40"
+                  disabled={supportSubmitting}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Typography as="label" variant="body-sm" className="text-white text-sm font-medium">
+                  Details
+                </Typography>
+                <textarea
+                  value={supportMessage}
+                  onChange={(event) => setSupportMessage(event.target.value)}
+                  placeholder="Let us know what&apos;s happening or what you would like to see. Screenshots, steps to reproduce, or expectations are super helpful."
+                  rows={6}
+                  className="w-full rounded-xl bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-white text-sm placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+                  disabled={supportSubmitting}
+                />
+              </div>
+
+              {supportError && (
+                <div className="bg-red-500/10 border border-red-500/40 text-red-300 text-sm rounded-xl px-4 py-3">
+                  {supportError}
+                </div>
+              )}
+
+              {supportSuccess && (
+                <div className="bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 text-sm rounded-xl px-4 py-3">
+                  {supportSuccess}
+                </div>
+              )}
+
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+                <Button
+                  onClick={handleCloseSupportModal}
+                  variant="secondary"
+                  size="md"
+                  className="!text-white"
+                  disabled={supportSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmitSupportFeedback}
+                  variant="primary"
+                  size="md"
+                  className="!text-white"
+                  disabled={supportSubmitting}
+                >
+                  {supportSubmitting ? 'Sending...' : 'Send to Pulse Team'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Message Modal */}
       {selectedMessage && (

@@ -15,6 +15,7 @@ export const supabaseAdmin = createClient(
 // Database types
 export type MessageTag = 'question' | 'feedback' | 'confession';
 export type ProductCategory = 'general' | 'feature_request' | 'service' | 'bug_report' | 'other';
+export type CreatorFeedbackCategory = 'bug' | 'feedback' | 'idea' | 'other';
 
 export interface Message {
   id: string;
@@ -49,6 +50,17 @@ export interface Creator {
   name: string;
   email: string;
   feedback_link: string;
+  created_at: string;
+}
+
+export interface CreatorFeedbackReport {
+  id: string;
+  creator_id: string;
+  company_id: string;
+  user_id: string | null;
+  category: CreatorFeedbackCategory;
+  subject: string | null;
+  message: string;
   created_at: string;
 }
 
