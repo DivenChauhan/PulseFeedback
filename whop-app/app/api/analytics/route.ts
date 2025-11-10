@@ -127,7 +127,10 @@ export async function GET(request: NextRequest) {
 
     // Response rate
     const messagesWithReplies = messages.filter(m => m.replies && m.replies.length > 0).length;
-    const responseRate = totalMessages > 0 ? ((messagesWithReplies / totalMessages) * 100).toFixed(1) : 0;
+    const responseRate =
+      totalMessages > 0
+        ? Number(((messagesWithReplies / totalMessages) * 100).toFixed(1))
+        : 0;
 
     // Public replies count
     const publicRepliesCount = messages.reduce((sum, m) => {
@@ -182,7 +185,7 @@ export async function GET(request: NextRequest) {
         totalReplies,
         publicRepliesCount,
         averageReactionsPerMessage,
-        responseRate: parseFloat(responseRate),
+        responseRate,
         averageResponseTime: averageResponseTime.toFixed(1),
         oldUnansweredCount: oldUnansweredMessages.length,
         peakEngagementDay: peakDay,

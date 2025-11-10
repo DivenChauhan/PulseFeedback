@@ -1,6 +1,7 @@
 {
 	"name": "whop-nextjs-app-template",
 	"version": "0.1.0",
+	"type": "module",
 	"private": true,
 	"scripts": {
 		"dev": "whop-proxy --command 'next dev --turbopack'",
