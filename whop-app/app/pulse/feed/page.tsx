@@ -29,6 +29,7 @@ export interface MessageWithRelations {
   product_category?: string;
   created_at: string;
   creator_id: string;
+  company_id: string;
   reviewed?: boolean;
   replies: Array<{
     id: string;
