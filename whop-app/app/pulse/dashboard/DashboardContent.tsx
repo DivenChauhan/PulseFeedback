@@ -654,9 +654,7 @@ export default function DashboardContent({ creatorId, creatorSlug }: DashboardCo
               <div className="space-y-3">
                 {paginatedMessages.map((message) => {
                   const isExpanded = expandedCards.has(message.id);
-                  const replyList = Array.isArray(message.reply) ? message.reply : [];
-                  const hasReply = replyList.length > 0;
-                  const reply = hasReply ? replyList[0]! : null;
+                  const reply = Array.isArray(message.reply) ? message.reply[0] : undefined;
 
                   return (
                     <div
@@ -677,7 +675,7 @@ export default function DashboardContent({ creatorId, creatorSlug }: DashboardCo
                                   {getCategoryLabel(message.product_category)}
                                 </span>
                               )}
-                              {hasReply && (
+                              {reply && (
                                 <span className="px-2 py-0.5 text-xs font-semibold rounded-md bg-white/[0.08] text-white border border-white/[0.1]">
                                   💬 Replied
                                 </span>
@@ -826,7 +824,7 @@ export default function DashboardContent({ creatorId, creatorSlug }: DashboardCo
                           </div>
 
                           {/* Reply Section */}
-                          {hasReply ? (
+                          {reply ? (
                             <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
                               <div className="flex items-center justify-between mb-2">
                                 <Typography as="span" variant="body-sm" className="!text-white font-semibold">
