@@ -656,7 +656,7 @@ export default function DashboardContent({ creatorId, creatorSlug }: DashboardCo
                   const isExpanded = expandedCards.has(message.id);
                   const replyList = Array.isArray(message.reply) ? message.reply : [];
                   const hasReply = replyList.length > 0;
-                  const reply = hasReply ? replyList[0] : null;
+                  const reply = hasReply ? replyList[0]! : null;
 
                   return (
                     <div
