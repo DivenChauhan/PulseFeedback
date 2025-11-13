@@ -655,6 +655,7 @@ export default function DashboardContent({ creatorId, creatorSlug }: DashboardCo
                 {paginatedMessages.map((message) => {
                   const isExpanded = expandedCards.has(message.id);
                   const reply = Array.isArray(message.reply) ? message.reply[0] : undefined;
+                  const hasReply = Boolean(reply);
 
                   return (
                     <div
