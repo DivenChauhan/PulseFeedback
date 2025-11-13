@@ -134,7 +134,8 @@ export async function GET(request: NextRequest) {
 
     // Public replies count
     const publicRepliesCount = messages.reduce((sum, m) => {
-      const publicReplies = m.replies?.filter((r: any) => r.is_public).length || 0;
+    const replies = Array.isArray(m.replies) ? m.replies : [];
+    const publicReplies = replies.filter((r: any) => r.is_public).length;
       return sum + publicReplies;
     }, 0);
 

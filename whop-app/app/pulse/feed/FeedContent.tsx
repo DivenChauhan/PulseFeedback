@@ -87,7 +87,10 @@ export default function FeedContent({ creatorId, creatorName, isCreator }: FeedC
 
   // Calculate community pulse metrics
   const totalReactions = messages.reduce((sum, m) => sum + (m.reaction_count || 0), 0);
-  const totalReplies = messages.reduce((sum, m) => sum + (m.replies?.filter(r => r.is_public).length || 0), 0);
+  const totalReplies = messages.reduce((sum, m) => {
+    const replies = Array.isArray(m.replies) ? m.replies : [];
+    return sum + replies.filter(r => r.is_public).length;
+  }, 0);
   const recentMessages = messages.filter(m => {
     const messageAge = Date.now() - new Date(m.created_at).getTime();
     return messageAge < 24 * 60 * 60 * 1000; // Last 24 hours
@@ -110,9 +113,11 @@ export default function FeedContent({ creatorId, creatorName, isCreator }: FeedC
       case 'most_reacted':
         return sorted.sort((a, b) => (b.reaction_count || 0) - (a.reaction_count || 0));
       case 'most_replied':
-        return sorted.sort((a, b) => 
-          (b.replies?.filter(r => r.is_public).length || 0) - (a.replies?.filter(r => r.is_public).length || 0)
-        );
+        return sorted.sort((a, b) => {
+          const repliesA = Array.isArray(a.replies) ? a.replies : [];
+          const repliesB = Array.isArray(b.replies) ? b.replies : [];
+          return repliesB.filter(r => r.is_public).length - repliesA.filter(r => r.is_public).length;
+        });
       default:
         return sorted;
     }
@@ -492,7 +497,9 @@ export default function FeedContent({ creatorId, creatorName, isCreator }: FeedC
                   const messageAge = Date.now() - new Date(message.created_at).getTime();
                   const isNew = messageAge < 24 * 60 * 60 * 1000;
                   const isExpanded = expandedCards.has(message.id);
-                  const hasPublicReply = message.replies?.some(r => r.is_public);
+                  const replies = Array.isArray(message.replies) ? message.replies : [];
+                  const publicReply = replies.find(r => r.is_public);
+                  const hasPublicReply = Boolean(publicReply);
 
                   return (
                     <motion.div
@@ -596,7 +603,7 @@ export default function FeedContent({ creatorId, creatorName, isCreator }: FeedC
                                   </span>
                                 </div>
                                 <Typography as="p" variant="body-sm" className="!text-white">
-                                  {message.replies.find(r => r.is_public)?.reply_text}
+                                  {publicReply?.reply_text}
                                 </Typography>
                               </motion.div>
                             )}
