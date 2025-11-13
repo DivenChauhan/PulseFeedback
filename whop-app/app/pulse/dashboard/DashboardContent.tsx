@@ -1005,7 +1005,7 @@ export default function DashboardContent({ creatorId, creatorSlug }: DashboardCo
                   onChange={(event) => setSupportSubject(event.target.value)}
                   placeholder="Quick summary"
                   className="bg-white/[0.05] border-white/[0.1] text-white placeholder:text-white/40"
-                  disabled={supportSubmitting}
+                  isDisabled={supportSubmitting}
                 />
               </div>
 
